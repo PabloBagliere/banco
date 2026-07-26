@@ -1,12 +1,30 @@
 import { NestFactory } from '@nestjs/core';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
-import { ConsoleLogger, ValidationPipe } from '@nestjs/common';
+import { ConsoleLogger, RequestMethod, ValidationPipe } from '@nestjs/common';
+import { AppConfig } from './infrastructure/config/app.config';
+import helmet from 'helmet';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule, {
-    logger: new ConsoleLogger({ json: true, colors: true, compact: false }),
+  // bufferLogs: los logs del boot se guardan y se reemiten con el logger
+  // definitivo una vez que podemos leer la config validada (sin process.env).
+  const app = await NestFactory.create(AppModule, { bufferLogs: true });
+  const appConfig = app.get(AppConfig);
+
+  app.useLogger(
+    new ConsoleLogger({
+      json: true,
+      colors: !appConfig.isProd,
+      compact: false,
+    }),
+  );
+
+  app.use(helmet());
+  app.enableCors();
+  app.setGlobalPrefix('api', {
+    exclude: [{ path: 'health', method: RequestMethod.GET }],
   });
+
   const config = new DocumentBuilder()
     .setTitle('Banco Api')
     .setDescription('Banco API description')
@@ -15,6 +33,7 @@ async function bootstrap() {
     .build();
   const documentFactory = () => SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('docs', app, documentFactory);
+
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
@@ -22,7 +41,7 @@ async function bootstrap() {
       forbidNonWhitelisted: true,
     }),
   );
-
-  await app.listen(process.env.PORT ?? 3000);
+  app.enableShutdownHooks();
+  await app.listen(appConfig.port);
 }
-bootstrap();
+void bootstrap();

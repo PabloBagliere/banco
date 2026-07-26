@@ -30,19 +30,43 @@ export class CatchEverythingFilter implements ExceptionFilter {
     const method: string = req.method;
     const url: string = httpAdapter.getRequestUrl(req);
 
-    const response =
-      exception instanceof HttpException ? exception.getResponse() : {};
-    this.logger.warn(`HTTP ${httpStatus} ${method} ${url}`, { exception });
+    if (httpStatus >= 500) {
+      this.logger.error(
+        `${method} ${url} → ${httpStatus}`,
+        (exception as Error)?.stack,
+      );
+    } else {
+      this.logger.warn(`${method} ${url} → ${httpStatus}`);
+    }
 
-    const responseBody = {
-      statusCode: httpStatus,
-      timestamp: new Date().toISOString(),
-      path: url,
-      ...(typeof response === 'object' && response !== null
-        ? response
-        : { error: response }),
-    };
+    const responseBody =
+      exception instanceof HttpException
+        ? this.buildFromHttpException(exception, httpStatus, url)
+        : {
+            statusCode: httpStatus,
+            message: 'Internal server error',
+            error: 'Internal Server Error',
+            timestamp: new Date().toISOString(),
+            path: url,
+          };
 
     httpAdapter.reply(ctx.getResponse(), responseBody, httpStatus);
+  }
+
+  private buildFromHttpException(
+    exception: HttpException,
+    statusCode: number,
+    path: string,
+  ) {
+    const response = exception.getResponse();
+    return {
+      statusCode,
+      timestamp: new Date().toISOString(),
+      path,
+      // getResponse() devuelve objeto ({ message, error }) o un string plano
+      ...(typeof response === 'object' && response !== null
+        ? response
+        : { message: response }),
+    };
   }
 }

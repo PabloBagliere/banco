@@ -1,10 +1,11 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule } from './config/config.module';
-import { CatchEverythingFilter } from './http-exception.filter';
-import { LoggingInterceptor } from './logging.interceptor';
+import { ConfigModule } from './infrastructure/config/config.module';
+import { CatchEverythingFilter } from './common/filters/http-exception.filter';
+import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 import { APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { AppConfig } from './config/app.config';
+import { AppConfig } from './infrastructure/config/app.config';
+import { HealthModule } from './modules/health/health.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { AppConfig } from './config/app.config';
         synchronize: config.isDev,
       }),
     }),
+    HealthModule,
   ],
   controllers: [],
   providers: [
