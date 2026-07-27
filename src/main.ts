@@ -3,7 +3,7 @@ import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import { ConsoleLogger, RequestMethod, ValidationPipe } from '@nestjs/common';
 import { AppConfig } from './infrastructure/config/app.config';
-// import helmet from 'helmet';
+import helmet from 'helmet';
 import { apiReference } from '@scalar/nestjs-api-reference';
 
 async function bootstrap() {
@@ -20,7 +20,7 @@ async function bootstrap() {
     }),
   );
 
-  // app.use(helmet());
+  app.use(helmet({ contentSecurityPolicy: false }));
   app.enableCors();
   app.setGlobalPrefix('api', {
     exclude: [{ path: 'health', method: RequestMethod.GET }],

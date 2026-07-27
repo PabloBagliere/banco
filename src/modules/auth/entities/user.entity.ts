@@ -7,8 +7,9 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { Account } from './account.entity';
-import { Session } from './session.entity';
+import { RefreshToken } from './refresh-token.entity';
 import { TwoFactor } from './two-factor.entity';
+import { UserRole } from './user-role.enum';
 
 @Entity('user')
 export class User {
@@ -47,8 +48,8 @@ export class User {
   })
   twoFactorEnabled!: boolean | null;
 
-  @Column({ type: 'text', nullable: true })
-  role!: string | null;
+  @Column({ type: 'enum', enum: UserRole, default: UserRole.USER })
+  role!: UserRole;
 
   @Column({ type: 'boolean', default: false, nullable: true })
   banned!: boolean | null;
@@ -62,8 +63,8 @@ export class User {
   @OneToMany(() => Account, (account) => account.user)
   accounts!: Account[];
 
-  @OneToMany(() => Session, (session) => session.user)
-  sessions!: Session[];
+  @OneToMany(() => RefreshToken, (refreshToken) => refreshToken.user)
+  refreshTokens!: RefreshToken[];
 
   @OneToMany(() => TwoFactor, (twoFactor) => twoFactor.user)
   twoFactors!: TwoFactor[];
