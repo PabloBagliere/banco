@@ -4,8 +4,8 @@
 
 ## Tareas
 
-- [ ] 1.1 Módulo `users`: entidad `User` (email único, password hasheado con bcrypt, nombre, role `USER | ADMIN`).
-- [ ] 1.2 `POST /auth/register` con DTO validado (email válido, password mínimo, etc.).
+- [x] 1.1 Módulo `users`: entidad `User` (email único, password hasheado con bcrypt, nombre, role `USER | ADMIN`).
+- [x] 1.2 `POST /auth/register` con DTO validado (email válido, password mínimo, etc.).
 - [ ] 1.3 `POST /auth/login` → devuelve **access token** (corto) + **refresh token** (largo).
 - [ ] 1.4 `POST /auth/refresh` → rota el refresh token.
 - [ ] 1.5 `JwtAuthGuard` global o por ruta + decorador `@CurrentUser()` (param decorator custom).

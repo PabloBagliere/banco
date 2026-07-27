@@ -3,7 +3,8 @@ import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import { ConsoleLogger, RequestMethod, ValidationPipe } from '@nestjs/common';
 import { AppConfig } from './infrastructure/config/app.config';
-import helmet from 'helmet';
+// import helmet from 'helmet';
+import { apiReference } from '@scalar/nestjs-api-reference';
 
 async function bootstrap() {
   // bufferLogs: los logs del boot se guardan y se reemiten con el logger
@@ -19,7 +20,7 @@ async function bootstrap() {
     }),
   );
 
-  app.use(helmet());
+  // app.use(helmet());
   app.enableCors();
   app.setGlobalPrefix('api', {
     exclude: [{ path: 'health', method: RequestMethod.GET }],
@@ -31,8 +32,8 @@ async function bootstrap() {
     .setVersion('1.0')
     .addTag('bank')
     .build();
-  const documentFactory = () => SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('docs', app, documentFactory);
+  const document = SwaggerModule.createDocument(app, config);
+  app.use('/docs', apiReference({ content: document }));
 
   app.useGlobalPipes(
     new ValidationPipe({

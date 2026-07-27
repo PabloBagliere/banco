@@ -6,6 +6,7 @@ import { APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppConfig } from './infrastructure/config/app.config';
 import { HealthModule } from './modules/health/health.module';
+import { AuthModule } from './modules/auth/auth.module';
 
 @Module({
   imports: [
@@ -17,10 +18,13 @@ import { HealthModule } from './modules/health/health.module';
         type: 'postgres',
         url: config.databaseUrl,
         autoLoadEntities: true,
-        synchronize: config.isDev,
+        synchronize: false,
+        migrationsRun: true,
+        migrations: [__dirname + '/infrastructure/database/migrations/*.js'],
       }),
     }),
     HealthModule,
+    AuthModule,
   ],
   controllers: [],
   providers: [
