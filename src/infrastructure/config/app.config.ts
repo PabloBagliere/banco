@@ -81,4 +81,15 @@ export class AppConfig {
   get fxRateArsUsd(): number {
     return this.config.getOrThrow('FX_RATE_ARS_USD');
   }
+
+  // Email (Resend - verificación de correo)
+  get resendApiKey(): string {
+    return this.config.getOrThrow('RESEND_API_KEY');
+  }
+  get appDomain(): string {
+    return this.config.getOrThrow('APP_DOMAIN');
+  }
+  get emailFrom(): string {
+    return this.config.getOrThrow('EMAIL_FROM');
+  }
 }

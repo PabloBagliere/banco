@@ -21,6 +21,9 @@ const envSchema = z.object({
   FRAUD_MAX_TRANSFERS_PER_WINDOW: z.coerce.number().int().min(0),
   FRAUD_WINDOW_MINUTES: z.coerce.number().int().min(0),
   FX_RATE_ARS_USD: z.coerce.number().int().min(0),
+  RESEND_API_KEY: z.string().min(1),
+  APP_DOMAIN: z.url(),
+  EMAIL_FROM: z.email(),
 });
 
 export type Environment = z.infer<typeof envSchema>;

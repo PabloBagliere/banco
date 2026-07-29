@@ -1,10 +1,10 @@
-import { ConflictException, Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { CreateUserDto } from './dto/createUser.dto';
 import { User } from './entities/user.entity';
 import { UserRole } from './entities/user-role.enum';
 import { Account } from './entities/account.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, QueryFailedError, Repository } from 'typeorm';
+import { DataSource, EntityManager, Repository } from 'typeorm';
 
 @Injectable()
 export class UsersService {
@@ -24,23 +24,19 @@ export class UsersService {
     return this.userRepository.exists({ where: { username } });
   }
 
-  async create(dto: CreateUserDto, passwordHash: string) {
+  async create(
+    manager: EntityManager,
+    dto: CreateUserDto,
+    passwordHash: string,
+  ): Promise<User> {
     const user = this.createUser(dto);
-    try {
-      await this.dataSource.transaction(async (manager) => {
-        await manager.save(user);
-        await manager.save(this.createAccount(passwordHash, user));
-      });
-    } catch (error) {
-      if (
-        error instanceof QueryFailedError &&
-        (error.driverError as { code?: string }).code === '23505'
-      ) {
-        throw new ConflictException('Email or username already exists');
-      }
-      throw error;
-    }
-    this.logger.debug('user create successfully');
+
+    await manager.save(user);
+    await manager.save(this.createAccount(passwordHash, user));
+
+    this.logger.debug('User created successfully');
+
+    return user;
   }
 
   private createUser(CreateUserDto: CreateUserDto): User {
