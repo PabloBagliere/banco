@@ -17,7 +17,7 @@ Registro de decisiones que se desvían del roadmap o que resuelven bifurcaciones
 **Se reemplazó `SwaggerModule.setup('docs')` por `@scalar/nestjs-api-reference` en `/docs`.**
 
 - **Por qué:** preferencia del autor (UI más moderna). El documento OpenAPI se sigue generando con `@nestjs/swagger` y los decoradores (`@ApiProperty`, `@ApiTags`); Scalar solo lo renderiza.
-- **⚠️ Efecto colateral pendiente:** al migrar se desactivó helmet (su CSP rompe el JS de Scalar). Hay que restaurarlo con CSP configurado, no dejarlo apagado — ver revisión Fase 1, ítem 🟠 #6.
+- **Efecto colateral (resuelto):** al migrar se había desactivado helmet (su CSP rompe el JS de Scalar). Ya se restauró con `helmet({ contentSecurityPolicy: false })`.
 - Sigue postergado de Fase 0: `/docs` expuesto en todos los entornos (condicionar a dev o proteger antes de prod).
 
 ## 3. Auth: JWT simétrico (HS256) + tabla `refresh_token` propia (Fase 1.3/1.4)

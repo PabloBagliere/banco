@@ -4,12 +4,8 @@ import {
   Injectable,
   Logger,
 } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, Repository } from 'typeorm';
-import { User } from './entities/user.entity';
-import { UserRole } from './entities/user-role.enum';
-import { Account } from './entities/account.entity';
-import { RegisterDto } from './dto/register.dto';
+import { CreateUserDto } from '../users/dto/createUser.dto';
+import { UsersService } from '../users/users.service';
 import { HttpService } from '@nestjs/axios';
 import crypto from 'node:crypto';
 import argon2 from 'argon2';
@@ -20,42 +16,43 @@ export class AuthService {
   private readonly logger = new Logger(AuthService.name);
 
   constructor(
-    @InjectRepository(User)
-    private userRepository: Repository<User>,
-    private dataSource: DataSource,
     private readonly httpService: HttpService,
+    private readonly usersService: UsersService,
   ) {}
 
-  async signUp(registerDto: RegisterDto): Promise<{ message: string }> {
-    if (await this.checkEmail(registerDto.email)) {
+  async signUp(createUserDto: CreateUserDto): Promise<{
+    message: string;
+    data: {
+      username: string;
+      email: string;
+      emailVerified: boolean;
+    };
+  }> {
+    if (await this.usersService.existsByEmail(createUserDto.email)) {
       throw new ConflictException('Email already exists');
     }
-    if (await this.checkUsername(registerDto.username)) {
+    if (await this.usersService.existsByUsername(createUserDto.username)) {
       throw new ConflictException('Username already exists');
     }
-    if (await this.isPasswordPwned(registerDto.password)) {
+    if (await this.isPasswordPwned(createUserDto.password)) {
       throw new BadRequestException('The password has been compromised.');
     }
 
-    const user = this.createUser(registerDto);
     // El hash se calcula ANTES de abrir la transacción: argon2 tarda
     // 100-300ms y no tiene sentido retener una conexión del pool mientras tanto.
-    const passwordHash = await this.hashPassword(registerDto.password);
+    const passwordHash = await this.hashPassword(createUserDto.password);
 
-    await this.dataSource.transaction(async (manager) => {
-      await manager.save(user);
-      await manager.save(this.createAccount(passwordHash, user));
-    });
+    await this.usersService.create(createUserDto, passwordHash);
 
-    return { message: 'Todo ok' };
-  }
-
-  private checkEmail(email: string): Promise<boolean> {
-    return this.userRepository.exists({ where: { email } });
-  }
-
-  private checkUsername(username: string): Promise<boolean> {
-    return this.userRepository.exists({ where: { username } });
+    return {
+      message:
+        'Registration successful. Check your email to verify your account.',
+      data: {
+        username: createUserDto.username,
+        email: createUserDto.email,
+        emailVerified: false,
+      },
+    };
   }
 
   // k-anonymity: solo viajan los primeros 5 chars del SHA-1, nunca la password.
@@ -93,24 +90,5 @@ export class AuthService {
 
   private hashPassword(password: string): Promise<string> {
     return argon2.hash(password);
-  }
-
-  private createUser(registerDto: RegisterDto): User {
-    const user: User = new User();
-    user.email = registerDto.email;
-    user.name = registerDto.name;
-    user.username = registerDto.username;
-    user.displayUsername = registerDto.username;
-    user.role = UserRole.USER;
-    return user;
-  }
-
-  private createAccount(hash: string, user: User): Account {
-    const account = new Account();
-    account.password = hash;
-    account.providerId = 'credentials';
-    account.user = user;
-    account.accountId = user.id;
-    return account;
   }
 }

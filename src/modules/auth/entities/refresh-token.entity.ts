@@ -7,7 +7,7 @@ import {
   ManyToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-import { User } from './user.entity';
+import { User } from '../../users/entities/user.entity';
 
 // Reemplaza a la tabla "session" de BetterAuth (decisión: JWT HS256,
 // ver roadmap/decisiones.md). Nunca se guarda el token en claro:

@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { Transform } from 'class-transformer';
 import {
   IsEmail,
   IsNotEmpty,
@@ -9,7 +10,7 @@ import {
   MinLength,
 } from 'class-validator';
 
-export class RegisterDto {
+export class CreateUserDto {
   @ApiProperty({ example: 'Pablo Bagliere' })
   @IsString()
   @IsNotEmpty()
@@ -19,9 +20,9 @@ export class RegisterDto {
   @ApiProperty({ example: 'pablo@example.com' })
   @IsEmail()
   @MaxLength(254)
+  @Transform(({ value }) => (value as string)?.toLowerCase().trim())
   email!: string;
 
-  // Requisito explícito: 8+ chars, minúscula, mayúscula, número y símbolo.
   @ApiProperty({
     example: 'ClaveSegura2026!',
     format: 'password',
@@ -45,5 +46,6 @@ export class RegisterDto {
   @Matches(/^[a-zA-Z0-9_]+$/, {
     message: 'username can only contain letters, numbers and underscores',
   })
+  @Transform(({ value }) => (value as string)?.toLowerCase().trim())
   username!: string;
 }

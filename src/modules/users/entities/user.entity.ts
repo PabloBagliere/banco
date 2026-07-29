@@ -7,8 +7,8 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { Account } from './account.entity';
-import { RefreshToken } from './refresh-token.entity';
-import { TwoFactor } from './two-factor.entity';
+import { RefreshToken } from '../../auth/entities/refresh-token.entity';
+import { TwoFactor } from '../../auth/entities/two-factor.entity';
 import { UserRole } from './user-role.enum';
 
 @Entity('user')
