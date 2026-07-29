@@ -5,16 +5,19 @@ import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { RefreshToken } from './entities/refresh-token.entity';
 import { TwoFactor } from './entities/two-factor.entity';
-import { Verification } from './entities/verification.entity';
 import { UsersModule } from '../users/users.module';
+import { VerificationModule } from '../verification/verification.module';
+import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([RefreshToken, Verification, TwoFactor]),
+    TypeOrmModule.forFeature([RefreshToken, TwoFactor]),
     // timeout: sin esto axios no tiene límite y una caída de HIBP
     // dejaría el registro colgado (ver AuthService.isPasswordPwned).
     HttpModule.register({ timeout: 3000 }),
     UsersModule,
+    VerificationModule,
+    NotificationsModule,
   ],
   controllers: [AuthController],
   providers: [AuthService],

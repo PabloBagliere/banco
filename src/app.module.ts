@@ -9,6 +9,8 @@ import { HealthModule } from './modules/health/health.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { UsersModule } from './modules/users/users.module';
+import { VerificationModule } from './modules/verification/verification.module';
+import { NotificationsModule } from './modules/notifications/notifications.module';
 
 @Module({
   imports: [
@@ -38,6 +40,10 @@ import { UsersModule } from './modules/users/users.module';
     AuthModule,
 
     UsersModule,
+
+    VerificationModule,
+
+    NotificationsModule,
   ],
   controllers: [],
   providers: [

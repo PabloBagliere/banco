@@ -1,4 +1,4 @@
-export const CreateCuentaEmail = (verificationUrl: string) => `
+export const buildEmailVerificationHtml = (verificationUrl: string) => `
 <!DOCTYPE html>
 <html>
 <head>
@@ -115,7 +115,7 @@ color:#6b7280;
 line-height:22px;
 margin:0;
 ">
-This verification link expires in 15 minutes.
+This verification link expires in 1 hour.
 If you didn't create this account, you can safely ignore this email.
 </p>
 

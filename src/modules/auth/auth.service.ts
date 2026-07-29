@@ -10,11 +10,9 @@ import { HttpService } from '@nestjs/axios';
 import crypto from 'node:crypto';
 import argon2 from 'argon2';
 import { firstValueFrom, map } from 'rxjs';
-import { DataSource, EntityManager, QueryFailedError } from 'typeorm';
-import { User } from '../users/entities/user.entity';
-import { Verification } from './entities/verification.entity';
-import { CreateCuentaEmail } from './cuentaCreate.html';
-import { AppConfig } from '../../infrastructure/config/app.config';
+import { DataSource, QueryFailedError } from 'typeorm';
+import { VerificationService } from '../verification/verification.service';
+import { NotificationsService } from '../notifications/notifications.service';
 
 @Injectable()
 export class AuthService {
@@ -24,7 +22,8 @@ export class AuthService {
     private dataSource: DataSource,
     private readonly httpService: HttpService,
     private readonly usersService: UsersService,
-    private readonly config: AppConfig,
+    private readonly verificationService: VerificationService,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
   async signUp(createUserDto: CreateUserDto): Promise<{
@@ -57,7 +56,7 @@ export class AuthService {
           passwordHash,
         );
 
-        return this.verificationService(manager, user);
+        return this.verificationService.createToken(manager, user.id);
       });
     } catch (error) {
       if (
@@ -70,7 +69,10 @@ export class AuthService {
     }
 
     try {
-      await this.sendEmailVerifiactionToken(createUserDto.email, tokenVerify);
+      await this.notificationsService.sendVerificationEmail(
+        createUserDto.email,
+        tokenVerify,
+      );
     } catch (error) {
       this.logger.error('not enviar email', error);
     }
@@ -120,37 +122,5 @@ export class AuthService {
 
   private hashPassword(password: string): Promise<string> {
     return argon2.hash(password);
-  }
-
-  private async verificationService(manager: EntityManager, user: User) {
-    const token = crypto.randomBytes(32).toString('hex');
-    const verify = new Verification();
-    verify.identifier = user.id;
-    verify.value = token;
-    verify.expiresAt = new Date(Date.now() + 1000 * 60 * 60);
-    await manager.save(verify);
-    return token;
-  }
-
-  private async sendEmailVerifiactionToken(email: string, token: string) {
-    const verificationUrl = `${this.config.appDomain}/verify?token=${token}`;
-    const html = CreateCuentaEmail(verificationUrl);
-    await firstValueFrom(
-      this.httpService.post(
-        'https://api.resend.com/emails',
-        {
-          from: `Pablo Bank <${this.config.emailFrom}>`,
-          to: email,
-          subject: 'Verify your email',
-          html,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${this.config.resendApiKey}`,
-            'Content-Type': 'application/json',
-          },
-        },
-      ),
-    );
   }
 }
