@@ -1,6 +1,7 @@
 import { ConfigService } from '@nestjs/config';
 import { Injectable } from '@nestjs/common';
 import { Environment } from './env.validation';
+import { StringValue } from 'ms';
 
 @Injectable()
 export class AppConfig {
@@ -52,10 +53,10 @@ export class AppConfig {
   get jwtRefreshSecret(): string {
     return this.config.getOrThrow('JWT_REFRESH_SECRET');
   }
-  get jwtAccessExpiresIn(): string {
+  get jwtAccessExpiresIn(): StringValue {
     return this.config.getOrThrow('JWT_ACCESS_EXPIRES_IN');
   }
-  get jwtRefreshExpiresIn(): string {
+  get jwtRefreshExpiresIn(): StringValue {
     return this.config.getOrThrow('JWT_REFRESH_EXPIRES_IN');
   }
 

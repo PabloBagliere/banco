@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import type { StringValue } from 'ms';
 
 const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'production', 'test']),
@@ -12,8 +13,12 @@ const envSchema = z.object({
   REDIS_PORT: z.coerce.number().int().min(1).max(65535).default(6379),
   JWT_ACCESS_SECRET: z.string().min(64),
   JWT_REFRESH_SECRET: z.string().min(64),
-  JWT_ACCESS_EXPIRES_IN: z.string(),
-  JWT_REFRESH_EXPIRES_IN: z.string(),
+  JWT_ACCESS_EXPIRES_IN: z.custom<StringValue>(
+    (value) => typeof value === 'string',
+  ),
+  JWT_REFRESH_EXPIRES_IN: z.custom<StringValue>(
+    (value) => typeof value === 'string',
+  ),
   DAILY_LIMIT_STANDARD_ARS: z.coerce.number().int().min(0),
   DAILY_LIMIT_PREMIUM_ARS: z.coerce.number().int().min(0),
   TRANSFER_FEE_STANDARD_ARS: z.coerce.number().int().min(0),

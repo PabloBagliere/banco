@@ -1,4 +1,9 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateUserDto } from './dto/createUser.dto';
 import { User } from './entities/user.entity';
 import { UserRole } from './entities/user-role.enum';
@@ -13,6 +18,8 @@ export class UsersService {
   constructor(
     @InjectRepository(User)
     private userRepository: Repository<User>,
+    @InjectRepository(Account)
+    private accountRepository: Repository<Account>,
   ) {}
 
   async create(
@@ -28,6 +35,25 @@ export class UsersService {
     this.logger.debug('User created successfully');
 
     return user;
+  }
+  findOne(email: string) {
+    return this.userRepository.findOne({
+      where: {
+        email: email,
+      },
+    });
+  }
+  async findOnePasswordHash(user: User) {
+    const result = await this.accountRepository.findOne({
+      where: {
+        user: user,
+      },
+    });
+    if (!result) {
+      this.logger.error('Password not user account ' + user.email);
+      throw new InternalServerErrorException('Password account not found');
+    }
+    return result.password;
   }
 
   existsByEmail(email: string): Promise<boolean> {
