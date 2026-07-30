@@ -1,4 +1,4 @@
-import { Controller, Get } from '@nestjs/common';
+import { Body, Controller, Post } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { VerificationService } from './verification.service';
 import { VerifyDto } from './dto/verify.dto';
@@ -8,8 +8,8 @@ import { VerifyDto } from './dto/verify.dto';
 export class VerificationController {
   constructor(private readonly verificationService: VerificationService) {}
 
-  @Get()
-  verifyToken(token: VerifyDto) {
-    return this.verifyToken(token);
+  @Post('verify')
+  verifyToken(@Body() token: VerifyDto) {
+    return this.verificationService.verifyToken(token);
   }
 }

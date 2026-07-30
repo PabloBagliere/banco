@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   UnauthorizedException,
   InternalServerErrorException,
   Injectable,
@@ -21,11 +22,22 @@ import { RefreshToken } from './entities/refresh-token.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from '../users/entities/user.entity';
 import { AppConfig } from 'src/infrastructure/config/app.config';
+import {
+  JwtAccessPayload,
+  JwtRefreshPayload,
+} from './interfaces/jwt-payload.interface';
 import ms from 'ms';
 
 @Injectable()
 export class AuthService {
   private readonly logger = new Logger(AuthService.name);
+
+  // Hash argon2id válido de una password aleatoria, precalculado. Se usa para
+  // ejecutar un verify completo cuando el email no existe: sin esto, "email
+  // inexistente" respondería ~200ms más rápido que "password mala" y el
+  // timing delataría qué emails están registrados (enumeración).
+  private static readonly DUMMY_HASH =
+    '$argon2id$v=19$m=65536,p=4,t=3$DmPcej26dsHhWuKuYQG4OA$/S63/SuVSQnUHnTM0z6qALsxug/SCnWr1a6PU7yKoVo';
 
   constructor(
     @InjectRepository(RefreshToken)
@@ -87,7 +99,10 @@ export class AuthService {
         tokenVerify,
       );
     } catch (error) {
-      this.logger.error('not enviar email', error);
+      this.logger.error(
+        'Failed to send verification email',
+        (error as Error).stack,
+      );
     }
     return {
       message:
@@ -103,27 +118,30 @@ export class AuthService {
   async signIn(loginUserDto: LoginDto, ip: string, userAgent: string) {
     const user = await this.usersService.findOne(loginUserDto.email);
     if (!user) {
-      throw new UnauthorizedException('Invalid credentials');
-    }
-    if (!user.emailVerified) {
+      // Verify contra un hash dummy: igual costo que una password incorrecta,
+      // el timing no filtra si el email existe.
+      await this.compareHash(loginUserDto.password, AuthService.DUMMY_HASH);
       throw new UnauthorizedException('Invalid credentials');
     }
     const passwordHash = await this.usersService.findOnePasswordHash(user);
     if (!passwordHash) {
-      this.logger.error('User not password account what ' + user.email);
+      this.logger.error('Credentials account not found for user: ' + user.id);
       throw new InternalServerErrorException('Password account not found');
     }
     if (!(await this.compareHash(loginUserDto.password, passwordHash))) {
       throw new UnauthorizedException('Invalid credentials');
     }
-    const payload = {
+    // Estado de la cuenta DESPUÉS de validar credenciales: ni el mensaje ni
+    // el timing filtran si un email existe / está verificado / baneado.
+    if (!user.emailVerified) {
+      throw new UnauthorizedException('Invalid credentials');
+    }
+    if (this.isBanned(user)) {
+      throw new ForbiddenException('Account suspended');
+    }
+    const payload: JwtAccessPayload = {
       sub: user.id,
-      username: user.username,
-      displayName: user.displayUsername,
       role: user.role,
-      image: user.image,
-      email: user.email,
-      name: user.name,
     };
     const access = await this.signAccessToken(payload);
     const refresh = await this.createRefreshToken(user, ip, userAgent);
@@ -131,6 +149,12 @@ export class AuthService {
       access_token: access,
       refresh_token: refresh,
     };
+  }
+
+  // Ban permanente (sin fecha) o vigente. Un ban vencido permite loguear.
+  private isBanned(user: User): boolean {
+    if (!user.banned) return false;
+    return !user.banExpires || user.banExpires > new Date();
   }
 
   // k-anonymity: solo viajan los primeros 5 chars del SHA-1, nunca la password.
@@ -174,38 +198,42 @@ export class AuthService {
     return argon2.verify(hashPassword, password);
   }
 
-  private async signAccessToken(payload) {
+  private signAccessToken(payload: JwtAccessPayload): Promise<string> {
     return this.jwtService.signAsync(payload, {
       secret: this.config.jwtAccessSecret,
       expiresIn: this.config.jwtAccessExpiresIn,
     });
   }
 
-  private async signRefreshToken(payload) {
+  private signRefreshToken(payload: JwtRefreshPayload): Promise<string> {
     return this.jwtService.signAsync(payload, {
       secret: this.config.jwtRefreshSecret,
       expiresIn: this.config.jwtRefreshExpiresIn,
     });
   }
 
-  private async createRefreshToken(user: User, ip: string, userAgent: string) {
-    const refresh = await this.signRefreshToken({ sub: user.id });
-    const expiresAt = new Date(
+  private async createRefreshToken(
+    user: User,
+    ip: string,
+    userAgent: string,
+  ): Promise<string> {
+    const refresh = await this.signRefreshToken({
+      sub: user.id,
+      jti: crypto.randomUUID(),
+    });
+    const refreshToken = new RefreshToken();
+    refreshToken.user = user;
+    refreshToken.ipAddress = ip;
+    refreshToken.userAgent = userAgent;
+    refreshToken.tokenHash = crypto
+      .createHash('sha256')
+      .update(refresh)
+      .digest('hex');
+    refreshToken.expiresAt = new Date(
       Date.now() + ms(this.config.jwtRefreshExpiresIn),
     );
-    const hash = await this.createHash(refresh);
-    const Refresh = new RefreshToken();
-    Refresh.user = user;
-    Refresh.ipAddress = ip;
-    Refresh.userAgent = userAgent;
-    Refresh.tokenHash = hash;
-    Refresh.expiresAt = expiresAt;
-    await this.saveRefreshToken(Refresh);
-    this.logger.debug('Save token refresh');
+    await this.refreshRepository.save(refreshToken);
+    this.logger.debug('Refresh token stored');
     return refresh;
-  }
-
-  private saveRefreshToken(refresh: RefreshToken) {
-    return this.refreshRepository.save(refresh);
   }
 }

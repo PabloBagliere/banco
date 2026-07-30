@@ -1,4 +1,11 @@
-import { Body, Controller, Post, Req } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  HttpCode,
+  HttpStatus,
+  Post,
+  Req,
+} from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { CreateUserDto } from '../users/dto/createUser.dto';
@@ -15,6 +22,7 @@ export class AuthController {
     return this.authService.signUp(signUpDto);
   }
 
+  @HttpCode(HttpStatus.OK)
   @Post('login')
   signIn(@Body() signInDto: LoginDto, @Req() request: Request) {
     const ip = request.ip ?? 'Not Ip';

@@ -1,5 +1,13 @@
 import { z } from 'zod';
-import type { StringValue } from 'ms';
+import ms, { type StringValue } from 'ms';
+
+// Duración válida para la librería `ms` ("15m", "1h", "7d"). Sin este refine
+// cualquier string pasaba el boot y explotaba recién en el primer uso
+// (ms() devuelve undefined → new Date(NaN) / expiresIn inválido → 500).
+const msDuration = z.custom<StringValue>(
+  (v) => typeof v === 'string' && Number.isFinite(ms(v as StringValue)),
+  'Formato de duración inválido (ejemplos: "15m", "1h", "7d")',
+);
 
 const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'production', 'test']),
@@ -13,12 +21,8 @@ const envSchema = z.object({
   REDIS_PORT: z.coerce.number().int().min(1).max(65535).default(6379),
   JWT_ACCESS_SECRET: z.string().min(64),
   JWT_REFRESH_SECRET: z.string().min(64),
-  JWT_ACCESS_EXPIRES_IN: z.custom<StringValue>(
-    (value) => typeof value === 'string',
-  ),
-  JWT_REFRESH_EXPIRES_IN: z.custom<StringValue>(
-    (value) => typeof value === 'string',
-  ),
+  JWT_ACCESS_EXPIRES_IN: msDuration,
+  JWT_REFRESH_EXPIRES_IN: msDuration,
   DAILY_LIMIT_STANDARD_ARS: z.coerce.number().int().min(0),
   DAILY_LIMIT_PREMIUM_ARS: z.coerce.number().int().min(0),
   TRANSFER_FEE_STANDARD_ARS: z.coerce.number().int().min(0),

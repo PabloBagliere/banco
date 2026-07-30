@@ -47,10 +47,11 @@ export class UsersService {
     const result = await this.accountRepository.findOne({
       where: {
         user: user,
+        providerId: 'credentials',
       },
     });
     if (!result) {
-      this.logger.error('Password not user account ' + user.email);
+      this.logger.error('Credentials account not found for user: ' + user.id);
       throw new InternalServerErrorException('Password account not found');
     }
     return result.password;
