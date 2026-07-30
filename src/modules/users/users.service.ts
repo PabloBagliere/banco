@@ -1,10 +1,10 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { CreateUserDto } from './dto/createUser.dto';
 import { User } from './entities/user.entity';
 import { UserRole } from './entities/user-role.enum';
 import { Account } from './entities/account.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, EntityManager, Repository } from 'typeorm';
+import { EntityManager, Repository } from 'typeorm';
 
 @Injectable()
 export class UsersService {
@@ -13,16 +13,7 @@ export class UsersService {
   constructor(
     @InjectRepository(User)
     private userRepository: Repository<User>,
-    private dataSource: DataSource,
   ) {}
-
-  existsByEmail(email: string): Promise<boolean> {
-    return this.userRepository.exists({ where: { email } });
-  }
-
-  existsByUsername(username: string): Promise<boolean> {
-    return this.userRepository.exists({ where: { username } });
-  }
 
   async create(
     manager: EntityManager,
@@ -37,6 +28,25 @@ export class UsersService {
     this.logger.debug('User created successfully');
 
     return user;
+  }
+
+  existsByEmail(email: string): Promise<boolean> {
+    return this.userRepository.exists({ where: { email } });
+  }
+
+  existsByUsername(username: string): Promise<boolean> {
+    return this.userRepository.exists({ where: { username } });
+  }
+
+  async verifyEmail(id: string) {
+    const result = await this.userRepository.update(id, {
+      emailVerified: true,
+    });
+    if (result.affected === 0) {
+      throw new NotFoundException(`User with id ${id} not found`);
+    }
+    this.logger.debug(`Updated user email validity: ${id}`);
+    return true;
   }
 
   private createUser(CreateUserDto: CreateUserDto): User {
