@@ -1,15 +1,10 @@
-import {
-  Injectable,
-  InternalServerErrorException,
-  Logger,
-  NotFoundException,
-} from '@nestjs/common';
-import { CreateUserDto } from './dto/createUser.dto';
-import { User } from './entities/user.entity';
-import { UserRole } from './entities/user-role.enum';
-import { Account } from './entities/account.entity';
+import { Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { EntityManager, Repository } from 'typeorm';
+import { CreateUserDto } from './dto/createUser.dto';
+import { Account } from './entities/account.entity';
+import { UserRole } from './entities/user-role.enum';
+import { User } from './entities/user.entity';
 
 @Injectable()
 export class UsersService {
@@ -22,11 +17,7 @@ export class UsersService {
     private accountRepository: Repository<Account>,
   ) {}
 
-  async create(
-    manager: EntityManager,
-    dto: CreateUserDto,
-    passwordHash: string,
-  ): Promise<User> {
+  async create(manager: EntityManager, dto: CreateUserDto, passwordHash: string): Promise<User> {
     const user = this.createUser(dto);
 
     await manager.save(user);
@@ -39,14 +30,14 @@ export class UsersService {
   findOne(email: string) {
     return this.userRepository.findOne({
       where: {
-        email: email,
+        email,
       },
     });
   }
   async findOnePasswordHash(user: User) {
     const result = await this.accountRepository.findOne({
       where: {
-        user: user,
+        user,
         providerId: 'credentials',
       },
     });
@@ -76,12 +67,12 @@ export class UsersService {
     return true;
   }
 
-  private createUser(CreateUserDto: CreateUserDto): User {
+  private createUser(dto: CreateUserDto): User {
     const user: User = new User();
-    user.email = CreateUserDto.email;
-    user.name = CreateUserDto.name;
-    user.username = CreateUserDto.username;
-    user.displayUsername = CreateUserDto.username;
+    user.email = dto.email;
+    user.name = dto.name;
+    user.username = dto.username;
+    user.displayUsername = dto.username;
     user.role = UserRole.USER;
     return user;
   }

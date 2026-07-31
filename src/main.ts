@@ -1,10 +1,10 @@
+import { ConsoleLogger, RequestMethod, ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
-import { AppModule } from './app.module';
-import { ConsoleLogger, RequestMethod, ValidationPipe } from '@nestjs/common';
-import { AppConfig } from './infrastructure/config/app.config';
-import helmet from 'helmet';
 import { apiReference } from '@scalar/nestjs-api-reference';
+import helmet from 'helmet';
+import { AppModule } from './app.module';
+import { AppConfig } from './infrastructure/config/app.config';
 
 async function bootstrap() {
   // bufferLogs: los logs del boot se guardan y se reemiten con el logger

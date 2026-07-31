@@ -1,7 +1,7 @@
 import { Body, Controller, Post } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import { VerificationService } from './verification.service';
 import { VerifyDto } from './dto/verify.dto';
+import { VerificationService } from './verification.service';
 
 @ApiTags('verification')
 @Controller('verification')

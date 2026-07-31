@@ -1,7 +1,4 @@
-import {
-  InternalServerErrorException,
-  NotFoundException,
-} from '@nestjs/common';
+import { InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { EntityManager } from 'typeorm';
@@ -147,9 +144,7 @@ describe('UsersService', () => {
     it('lanza InternalServerErrorException si no existe la cuenta credentials', async () => {
       accountRepository.findOne.mockResolvedValue(null);
 
-      await expect(service.findOnePasswordHash(user)).rejects.toBeInstanceOf(
-        InternalServerErrorException,
-      );
+      await expect(service.findOnePasswordHash(user)).rejects.toBeInstanceOf(InternalServerErrorException);
     });
   });
 
@@ -157,38 +152,32 @@ describe('UsersService', () => {
     it.each([
       [true, true],
       [false, false],
-    ])(
-      'devuelve %s cuando el repositorio responde %s',
-      async (expected, repoValue) => {
-        userRepository.exists.mockResolvedValue(repoValue);
+    ])('devuelve %s cuando el repositorio responde %s', async (expected, repoValue) => {
+      userRepository.exists.mockResolvedValue(repoValue);
 
-        const result = await service.existsByEmail('a@b.com');
+      const result = await service.existsByEmail('a@b.com');
 
-        expect(userRepository.exists).toHaveBeenCalledWith({
-          where: { email: 'a@b.com' },
-        });
-        expect(result).toBe(expected);
-      },
-    );
+      expect(userRepository.exists).toHaveBeenCalledWith({
+        where: { email: 'a@b.com' },
+      });
+      expect(result).toBe(expected);
+    });
   });
 
   describe('existsByUsername', () => {
     it.each([
       [true, true],
       [false, false],
-    ])(
-      'devuelve %s cuando el repositorio responde %s',
-      async (expected, repoValue) => {
-        userRepository.exists.mockResolvedValue(repoValue);
+    ])('devuelve %s cuando el repositorio responde %s', async (expected, repoValue) => {
+      userRepository.exists.mockResolvedValue(repoValue);
 
-        const result = await service.existsByUsername('pablobagliere');
+      const result = await service.existsByUsername('pablobagliere');
 
-        expect(userRepository.exists).toHaveBeenCalledWith({
-          where: { username: 'pablobagliere' },
-        });
-        expect(result).toBe(expected);
-      },
-    );
+      expect(userRepository.exists).toHaveBeenCalledWith({
+        where: { username: 'pablobagliere' },
+      });
+      expect(result).toBe(expected);
+    });
   });
 
   describe('verifyEmail', () => {
@@ -214,9 +203,7 @@ describe('UsersService', () => {
         generatedMaps: [],
       });
 
-      await expect(
-        service.verifyEmail('uuid-inexistente'),
-      ).rejects.toBeInstanceOf(NotFoundException);
+      await expect(service.verifyEmail('uuid-inexistente')).rejects.toBeInstanceOf(NotFoundException);
     });
   });
 });

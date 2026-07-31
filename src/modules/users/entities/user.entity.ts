@@ -1,15 +1,8 @@
-import {
-  Column,
-  CreateDateColumn,
-  Entity,
-  OneToMany,
-  PrimaryGeneratedColumn,
-  UpdateDateColumn,
-} from 'typeorm';
+import { Column, CreateDateColumn, Entity, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
 import { Account } from './account.entity';
+import { UserRole } from './user-role.enum';
 import { RefreshToken } from '../../auth/entities/refresh-token.entity';
 import { TwoFactor } from '../../auth/entities/two-factor.entity';
-import { UserRole } from './user-role.enum';
 
 @Entity('user')
 export class User {

@@ -1,7 +1,7 @@
-import { ConfigService } from '@nestjs/config';
 import { Injectable } from '@nestjs/common';
-import { Environment } from './env.validation';
+import { ConfigService } from '@nestjs/config';
 import { StringValue } from 'ms';
+import { Environment } from './env.validation';
 
 @Injectable()
 export class AppConfig {

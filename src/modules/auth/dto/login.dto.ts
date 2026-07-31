@@ -6,7 +6,7 @@ export class LoginDto {
   @ApiProperty({ example: 'pablo@example.com' })
   @IsEmail()
   @MaxLength(254)
-  @Transform(({ value }) => (value as string)?.toLowerCase().trim())
+  @Transform(({ value }) => (value as string | undefined)?.toLowerCase().trim())
   email!: string;
 
   @ApiProperty({

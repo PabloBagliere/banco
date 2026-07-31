@@ -1,15 +1,10 @@
-import {
-  BadRequestException,
-  Injectable,
-  Logger,
-  UnauthorizedException,
-} from '@nestjs/common';
 import crypto from 'node:crypto';
-import { EntityManager, Repository } from 'typeorm';
-import { Verification } from './entities/verification.entity';
-import { VerifyDto } from './dto/verify.dto';
-import { UsersService } from '../users/users.service';
+import { BadRequestException, Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { EntityManager, Repository } from 'typeorm';
+import { VerifyDto } from './dto/verify.dto';
+import { Verification } from './entities/verification.entity';
+import { UsersService } from '../users/users.service';
 
 // Centraliza el ciclo de vida de los tokens/códigos de verificación
 // (hoy: verificación de email; a futuro: reset de password, 2FA, etc.).
@@ -27,17 +22,12 @@ export class VerificationService {
 
   // Recibe el EntityManager del caller para participar en su transacción:
   // el token debe crearse atómicamente junto con la entidad que lo origina.
-  async createToken(
-    manager: EntityManager,
-    identifier: string,
-  ): Promise<string> {
+  async createToken(manager: EntityManager, identifier: string): Promise<string> {
     const token = crypto.randomBytes(32).toString('hex');
     const verification = new Verification();
     verification.identifier = identifier;
     verification.value = token;
-    verification.expiresAt = new Date(
-      Date.now() + VerificationService.TOKEN_TTL_MS,
-    );
+    verification.expiresAt = new Date(Date.now() + VerificationService.TOKEN_TTL_MS);
     await manager.save(verification);
     return token;
   }

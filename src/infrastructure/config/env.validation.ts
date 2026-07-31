@@ -1,5 +1,5 @@
-import { z } from 'zod';
 import ms, { type StringValue } from 'ms';
+import { z } from 'zod';
 
 // Duración válida para la librería `ms` ("15m", "1h", "7d"). Sin este refine
 // cualquier string pasaba el boot y explotaba recién en el primer uso
@@ -40,9 +40,7 @@ export type Environment = z.infer<typeof envSchema>;
 export const validate = (config: Record<string, unknown>) => {
   const result = envSchema.safeParse(config);
   if (!result.success) {
-    const issues = result.error.issues
-      .map((i) => `  - ${i.path.join('.')}: ${i.message}`)
-      .join('\n');
+    const issues = result.error.issues.map((i) => `  - ${i.path.join('.')}: ${i.message}`).join('\n');
     throw new Error(`Variables de entorno inválidas:\n${issues}`);
   }
   return result.data;

@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { AppConfig } from '../../infrastructure/config/app.config';
 import { EmailChannel } from './channels/email.channel';
 import { buildEmailVerificationHtml } from './templates/email-verification.template';
+import { AppConfig } from '../../infrastructure/config/app.config';
 
 // Fachada de notificaciones: el resto de la app dice QUÉ notificar
 // (verificación de email, reset de password, etc.) y este servicio decide

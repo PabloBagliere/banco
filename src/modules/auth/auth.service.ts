@@ -1,3 +1,5 @@
+import crypto from 'node:crypto';
+import { HttpService } from '@nestjs/axios';
 import {
   BadRequestException,
   ConflictException,
@@ -7,26 +9,21 @@ import {
   Injectable,
   Logger,
 } from '@nestjs/common';
-import { CreateUserDto } from '../users/dto/createUser.dto';
-import { UsersService } from '../users/users.service';
-import { HttpService } from '@nestjs/axios';
-import crypto from 'node:crypto';
-import argon2 from 'argon2';
+import { JwtService } from '@nestjs/jwt';
+import { InjectRepository } from '@nestjs/typeorm';
+import { hash, verify } from 'argon2';
+import ms from 'ms';
 import { firstValueFrom, map } from 'rxjs';
 import { DataSource, QueryFailedError, Repository } from 'typeorm';
-import { VerificationService } from '../verification/verification.service';
-import { NotificationsService } from '../notifications/notifications.service';
-import { LoginDto } from './dto/login.dto';
-import { JwtService } from '@nestjs/jwt';
-import { RefreshToken } from './entities/refresh-token.entity';
-import { InjectRepository } from '@nestjs/typeorm';
-import { User } from '../users/entities/user.entity';
 import { AppConfig } from '../../infrastructure/config/app.config';
-import {
-  JwtAccessPayload,
-  JwtRefreshPayload,
-} from './interfaces/jwt-payload.interface';
-import ms from 'ms';
+import { NotificationsService } from '../notifications/notifications.service';
+import { CreateUserDto } from '../users/dto/createUser.dto';
+import { UsersService } from '../users/users.service';
+import { VerificationService } from '../verification/verification.service';
+import { LoginDto } from './dto/login.dto';
+import { RefreshToken } from './entities/refresh-token.entity';
+import { JwtAccessPayload, JwtRefreshPayload } from './interfaces/jwt-payload.interface';
+import { User } from '../users/entities/user.entity';
 
 @Injectable()
 export class AuthService {
@@ -75,38 +72,24 @@ export class AuthService {
     let tokenVerify: string;
     try {
       tokenVerify = await this.dataSource.transaction(async (manager) => {
-        const user = await this.usersService.create(
-          manager,
-          createUserDto,
-          passwordHash,
-        );
+        const user = await this.usersService.create(manager, createUserDto, passwordHash);
 
         return this.verificationService.createToken(manager, user.id);
       });
     } catch (error) {
-      if (
-        error instanceof QueryFailedError &&
-        (error.driverError as { code?: string }).code === '23505'
-      ) {
+      if (error instanceof QueryFailedError && (error.driverError as { code?: string }).code === '23505') {
         throw new ConflictException('Email or username already exists');
       }
       throw error;
     }
 
     try {
-      await this.notificationsService.sendVerificationEmail(
-        createUserDto.email,
-        tokenVerify,
-      );
+      await this.notificationsService.sendVerificationEmail(createUserDto.email, tokenVerify);
     } catch (error) {
-      this.logger.error(
-        'Failed to send verification email',
-        (error as Error).stack,
-      );
+      this.logger.error('Failed to send verification email', (error as Error).stack);
     }
     return {
-      message:
-        'Registration successful. Check your email to verify your account.',
+      message: 'Registration successful. Check your email to verify your account.',
       data: {
         username: createUserDto.username,
         email: createUserDto.email,
@@ -153,7 +136,9 @@ export class AuthService {
 
   // Ban permanente (sin fecha) o vigente. Un ban vencido permite loguear.
   private isBanned(user: User): boolean {
-    if (!user.banned) return false;
+    if (!user.banned) {
+      return false;
+    }
     return !user.banExpires || user.banExpires > new Date();
   }
 
@@ -161,11 +146,8 @@ export class AuthService {
   // Fail-open a propósito: si HIBP no responde no se bloquea el registro
   // (la validación de fortaleza del DTO sigue aplicando). Ver roadmap/decisiones.md.
   private async isPasswordPwned(password: string): Promise<boolean> {
-    const sha1 = crypto
-      .createHash('sha1')
-      .update(password)
-      .digest('hex')
-      .toUpperCase();
+    // eslint-disable-next-line sonarjs/hashing -- la API de HIBP exige SHA-1 (k-anonymity)
+    const sha1 = crypto.createHash('sha1').update(password).digest('hex').toUpperCase();
 
     const prefix = sha1.slice(0, 5);
     const suffix = sha1.slice(5);
@@ -176,26 +158,20 @@ export class AuthService {
           .get<string>(`https://api.pwnedpasswords.com/range/${prefix}`, {
             headers: { 'Add-Padding': 'true' },
           })
-          .pipe(
-            map(({ data }) =>
-              data.split('\n').some((line: string) => line.startsWith(suffix)),
-            ),
-          ),
+          .pipe(map(({ data }) => data.split('\n').some((line: string) => line.startsWith(suffix)))),
       );
     } catch {
-      this.logger.warn(
-        'HIBP no disponible: se omite el chequeo de password comprometido',
-      );
+      this.logger.warn('HIBP no disponible: se omite el chequeo de password comprometido');
       return false;
     }
   }
 
   private createHash(password: string): Promise<string> {
-    return argon2.hash(password);
+    return hash(password);
   }
 
   private compareHash(password: string, hashPassword: string) {
-    return argon2.verify(hashPassword, password);
+    return verify(hashPassword, password);
   }
 
   private signAccessToken(payload: JwtAccessPayload): Promise<string> {
@@ -212,11 +188,7 @@ export class AuthService {
     });
   }
 
-  private async createRefreshToken(
-    user: User,
-    ip: string,
-    userAgent: string,
-  ): Promise<string> {
+  private async createRefreshToken(user: User, ip: string, userAgent: string): Promise<string> {
     const refresh = await this.signRefreshToken({
       sub: user.id,
       jti: crypto.randomUUID(),
@@ -225,13 +197,8 @@ export class AuthService {
     refreshToken.user = user;
     refreshToken.ipAddress = ip;
     refreshToken.userAgent = userAgent;
-    refreshToken.tokenHash = crypto
-      .createHash('sha256')
-      .update(refresh)
-      .digest('hex');
-    refreshToken.expiresAt = new Date(
-      Date.now() + ms(this.config.jwtRefreshExpiresIn),
-    );
+    refreshToken.tokenHash = crypto.createHash('sha256').update(refresh).digest('hex');
+    refreshToken.expiresAt = new Date(Date.now() + ms(this.config.jwtRefreshExpiresIn));
     await this.refreshRepository.save(refreshToken);
     this.logger.debug('Refresh token stored');
     return refresh;
