@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { finalize } from 'rxjs/operators';
+import { Request, Response } from 'express';
 
 @Injectable()
 export class LoggingInterceptor implements NestInterceptor {
@@ -15,8 +16,8 @@ export class LoggingInterceptor implements NestInterceptor {
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
     const http = context.switchToHttp();
 
-    const req = http.getRequest();
-    const res = http.getResponse();
+    const req = http.getRequest<Request>();
+    const res = http.getResponse<Response>();
     const start = Date.now();
 
     return next.handle().pipe(

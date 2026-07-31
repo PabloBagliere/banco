@@ -7,6 +7,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { HttpAdapterHost } from '@nestjs/core';
+import { Request } from 'express';
 
 @Catch()
 export class CatchEverythingFilter implements ExceptionFilter {
@@ -25,10 +26,10 @@ export class CatchEverythingFilter implements ExceptionFilter {
         ? exception.getStatus()
         : HttpStatus.INTERNAL_SERVER_ERROR;
 
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-    const req = ctx.getRequest();
+    const req = ctx.getRequest<Request>();
     const method: string = req.method;
-    const url: string = httpAdapter.getRequestUrl(req);
+    // getRequestUrl está tipado como `any` en @nestjs/core
+    const url: string = httpAdapter.getRequestUrl(req) as string;
 
     if (httpStatus >= 500) {
       this.logger.error(

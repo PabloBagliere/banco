@@ -21,7 +21,7 @@ import { JwtService } from '@nestjs/jwt';
 import { RefreshToken } from './entities/refresh-token.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from '../users/entities/user.entity';
-import { AppConfig } from 'src/infrastructure/config/app.config';
+import { AppConfig } from '../../infrastructure/config/app.config';
 import {
   JwtAccessPayload,
   JwtRefreshPayload,
