@@ -8,10 +8,10 @@
 - [x] 1.2 `POST /auth/register` con DTO validado (email válido, password mínimo, etc.).
 - [x] 1.3 `POST /auth/login` → devuelve **access token** (corto) + **refresh token** (largo).
 - [x] 1.4 `POST /auth/refresh` → rota el refresh token.
-- [ ] 1.5 `JwtAuthGuard` global o por ruta + decorador `@CurrentUser()` (param decorator custom).
-- [ ] 1.6 `RolesGuard` + decorador `@Roles('ADMIN')` (se usa después en audit/admin).
-- [ ] 1.7 `GET /auth/me` → perfil del usuario autenticado.
-- [ ] 1.8 Password nunca se serializa en respuestas (`class-transformer` `@Exclude` o similar).
+- [x] 1.5 `JwtAuthGuard` global o por ruta + decorador `@CurrentUser()` (param decorator custom).
+- [x] 1.6 `RolesGuard` + decorador `@Roles('ADMIN')` (se usa después en audit/admin).
+- [x] 1.7 `GET /auth/me` → perfil del usuario autenticado.
+- [x] 1.8 Password nunca se serializa en respuestas (`class-transformer` `@Exclude` o similar).
 
 ## ✅ Criterios de aceptación
 

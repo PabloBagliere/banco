@@ -1,0 +1,48 @@
+### Crear cuenta
+POST /api/auth/register HTTP/1.1
+Host: localhost:3000
+Content-Type: application/json
+
+{
+  "name":"Pablo Bagliere",
+  "email":"pablo.bagliere2@gmail.com",
+  "password":"ClaveSegura2026!",
+  "username":"pablobagliere"
+}
+
+#### verificar email
+
+POST /api/verification/verify HTTP/1.1
+Host: localhost:3000
+Content-Type: application/json
+
+{
+  "token":"b008b36e1b9909ee6bde305169958ba56ee6afccc322496a88f6bd3cc219e51a"
+}
+
+### Logearse
+
+POST /api/auth/login HTTP/1.1
+Host: localhost:3000
+Content-Type: application/json
+
+{
+  "email":"pablo.bagliere2@gmail.com",
+  "password":"ClaveSegura2026!"
+}
+
+#### Me
+
+GET /api/auth/me HTTP/1.1
+Host: localhost:3000
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI0NDU3NGJmMi04ZjA2LTRjYjMtOTEwNS1kM2I3MzNmMjg5NTUiLCJyb2xlIjoiVVNFUiIsImlhdCI6MTc4NTYyMTI1MSwiZXhwIjoxNzg1NjIyMTUxfQ._QoKbzwmE9lVVU1Cj7-o3_VxHmcVDr692M0hi8kKn0U
+
+### refresh token
+
+POST /api/auth/refresh HTTP/1.1
+Host: localhost:3000
+Content-Type: application/json
+
+{
+  "refresh" : "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI0NDU3NGJmMi04ZjA2LTRjYjMtOTEwNS1kM2I3MzNmMjg5NTUiLCJqdGkiOiI2ZTg2ZmIwNy1mZTgwLTRjZGYtODQ5OS03YmFmODE1ZjYyNzQiLCJpYXQiOjE3ODU2MjEyNTEsImV4cCI6MTc4NjIyNjA1MX0.dNQyEOXhV-Pb5APiTeXBDJrkbwMykvn06hHjfwm-Wzg"
+}

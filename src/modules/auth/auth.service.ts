@@ -107,11 +107,13 @@ export class AuthService {
       await this.compareHash(loginUserDto.password, AuthService.DUMMY_HASH);
       throw new UnauthorizedException('Invalid credentials');
     }
+    this.logger.debug('User encontrado');
     const passwordHash = await this.usersService.findOnePasswordHash(user);
     if (!passwordHash) {
       this.logger.error('Credentials account not found for user: ' + user.id);
       throw new InternalServerErrorException('Password account not found');
     }
+    this.logger.debug('Password encontrada a ese user');
     if (!(await this.compareHash(loginUserDto.password, passwordHash))) {
       throw new UnauthorizedException('Invalid credentials');
     }
@@ -181,6 +183,27 @@ export class AuthService {
     };
   }
 
+  async getUserMe(id: string) {
+    const user = await this.usersService.findOneId(id);
+    if (!user) {
+      this.logger.error('not user?? ' + id);
+      throw new InternalServerErrorException('Upps error');
+    }
+
+    if (user.banned) {
+      throw new UnauthorizedException('User banned contact administration');
+    }
+
+    return {
+      id: user.id,
+      email: user.email,
+      image: user.image,
+      userName: user.username,
+      displayName: user.displayUsername,
+      name: user.name,
+    };
+  }
+
   // Ban permanente (sin fecha) o vigente. Un ban vencido permite loguear.
   private isBanned(user: User): boolean {
     if (!user.banned) {
@@ -235,13 +258,13 @@ export class AuthService {
     });
   }
 
-  private isValidedRefreshToken(token: string) {
+  private isValidedRefreshToken(token: string): Promise<JwtRefreshPayload> {
     return this.jwtService.verifyAsync(token, {
       secret: this.config.jwtRefreshSecret,
     });
   }
 
-  private async checkRefreshTokenDb(tokenHash: string, idUser: string) {
+  private async checkRefreshTokenDb(tokenHash: string, idUser: string): Promise<RefreshToken> {
     const result = await this.refreshRepository.findOne({
       where: {
         tokenHash,
@@ -259,7 +282,7 @@ export class AuthService {
     return result;
   }
 
-  private tokenHash(token: string) {
+  private tokenHash(token: string): string {
     return crypto.createHash('sha256').update(token).digest('hex');
   }
 
@@ -267,7 +290,7 @@ export class AuthService {
     repository: Repository<RefreshToken> = this.refreshRepository,
     oldRefresh: RefreshToken,
     newRefresh: RefreshToken,
-  ) {
+  ): Promise<void> {
     await repository.update(
       {
         id: oldRefresh.id,

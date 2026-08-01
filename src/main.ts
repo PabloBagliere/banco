@@ -1,5 +1,6 @@
 import { ConsoleLogger, RequestMethod, ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
+import { NestExpressApplication } from '@nestjs/platform-express';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { apiReference } from '@scalar/nestjs-api-reference';
 import helmet from 'helmet';
@@ -9,9 +10,9 @@ import { AppConfig } from './infrastructure/config/app.config';
 async function bootstrap() {
   // bufferLogs: los logs del boot se guardan y se reemiten con el logger
   // definitivo una vez que podemos leer la config validada (sin process.env).
-  const app = await NestFactory.create(AppModule, { bufferLogs: true });
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, { bufferLogs: true });
   const appConfig = app.get(AppConfig);
-
+  app.set('trust proxy', 'loopback');
   app.useLogger(
     new ConsoleLogger({
       json: true,

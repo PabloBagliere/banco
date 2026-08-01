@@ -5,5 +5,5 @@ export class VerifyDto {
   @ApiProperty({ example: '#################' })
   @IsString()
   @IsNotEmpty()
-  verify!: string;
+  token!: string;
 }

@@ -44,7 +44,7 @@ export class UsersService {
   async findOnePasswordHash(user: User) {
     const result = await this.accountRepository.findOne({
       where: {
-        user,
+        userId: user.id,
         providerId: 'credentials',
       },
     });

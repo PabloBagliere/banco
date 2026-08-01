@@ -3,6 +3,7 @@ import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CatchEverythingFilter } from './common/filters/http-exception.filter';
+import { AuthGuard } from './common/guard/auth.guard';
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 import { AppConfig } from './infrastructure/config/app.config';
 import { ConfigModule } from './infrastructure/config/config.module';
@@ -58,6 +59,10 @@ import { VerificationModule } from './modules/verification/verification.module';
     {
       provide: APP_GUARD,
       useClass: ThrottlerGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: AuthGuard,
     },
   ],
 })

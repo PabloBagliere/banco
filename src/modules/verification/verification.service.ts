@@ -33,7 +33,7 @@ export class VerificationService {
   }
 
   async verifyToken(tokenDto: VerifyDto) {
-    const verification = await this.findByToken(tokenDto.verify);
+    const verification = await this.findByToken(tokenDto.token);
     if (!verification) {
       throw new BadRequestException('Invalid or expired verification token.');
     }
