@@ -21,6 +21,7 @@ import { CreateUserDto } from '../users/dto/createUser.dto';
 import { UsersService } from '../users/users.service';
 import { VerificationService } from '../verification/verification.service';
 import { LoginDto } from './dto/login.dto';
+import { RefreshTokenDto } from './dto/refreshToken.dto';
 import { RefreshToken } from './entities/refresh-token.entity';
 import { JwtAccessPayload, JwtRefreshPayload } from './interfaces/jwt-payload.interface';
 import { User } from '../users/entities/user.entity';
@@ -98,8 +99,8 @@ export class AuthService {
     };
   }
 
-  async signIn(loginUserDto: LoginDto, ip: string, userAgent: string) {
-    const user = await this.usersService.findOne(loginUserDto.email);
+  async signIn(loginUserDto: LoginDto, ip: string | null, userAgent: string | null) {
+    const user = await this.usersService.findOneEmail(loginUserDto.email);
     if (!user) {
       // Verify contra un hash dummy: igual costo que una password incorrecta,
       // el timing no filtra si el email existe.
@@ -127,10 +128,56 @@ export class AuthService {
       role: user.role,
     };
     const access = await this.signAccessToken(payload);
-    const refresh = await this.createRefreshToken(user, ip, userAgent);
+    const refresh = await this.signRefreshToken({
+      sub: user.id,
+      jti: crypto.randomUUID(),
+    });
+    await this.saveRefreshToken(user, ip, userAgent, refresh);
     return {
-      access_token: access,
-      refresh_token: refresh,
+      accessToken: access,
+      refreshToken: refresh,
+      expiresIn: ms(this.config.jwtAccessExpiresIn),
+      refreshExpiresIn: ms(this.config.jwtRefreshExpiresIn),
+      tokenType: 'Bearer',
+    };
+  }
+
+  async refreshToken(refreshDto: RefreshTokenDto, ip: string | null, userAgent: string | null) {
+    const token = await this.isValidedRefreshToken(refreshDto.refresh);
+    const tokenHash = this.tokenHash(refreshDto.refresh);
+    const user = await this.usersService.findOneId(token.sub);
+    if (!user) {
+      this.logger.error('What tokenValid not user?? ' + token.sub);
+      throw new UnauthorizedException('User Not exist');
+    }
+    const refreshTokenDB = await this.checkRefreshTokenDb(tokenHash, user.id);
+    const refresh = await this.signRefreshToken({
+      sub: user.id,
+      jti: crypto.randomUUID(),
+    });
+    const payload: JwtAccessPayload = {
+      sub: user.id,
+      role: user.role,
+    };
+    const access = await this.signAccessToken(payload);
+    try {
+      await this.dataSource.transaction(async (manager) => {
+        const repository = manager.getRepository(RefreshToken);
+        const newToken = await this.saveRefreshToken(user, ip, userAgent, refresh, repository);
+        await this.revokedRefreshToken(repository, refreshTokenDB, newToken);
+      });
+    } catch (error) {
+      if (error instanceof QueryFailedError && (error.driverError as { code?: string }).code === '23505') {
+        throw new ConflictException('Email or username already exists');
+      }
+      throw error;
+    }
+    return {
+      accessToken: access,
+      refreshToken: refresh,
+      expiresIn: ms(this.config.jwtAccessExpiresIn),
+      refreshExpiresIn: ms(this.config.jwtRefreshExpiresIn),
+      tokenType: 'Bearer',
     };
   }
 
@@ -188,19 +235,65 @@ export class AuthService {
     });
   }
 
-  private async createRefreshToken(user: User, ip: string, userAgent: string): Promise<string> {
-    const refresh = await this.signRefreshToken({
-      sub: user.id,
-      jti: crypto.randomUUID(),
+  private isValidedRefreshToken(token: string) {
+    return this.jwtService.verifyAsync(token, {
+      secret: this.config.jwtRefreshSecret,
     });
+  }
+
+  private async checkRefreshTokenDb(tokenHash: string, idUser: string) {
+    const result = await this.refreshRepository.findOne({
+      where: {
+        tokenHash,
+        userId: idUser,
+      },
+    });
+    if (!result) {
+      this.logger.debug('RefreshToken not in db ', { tokenHash, idUser });
+      throw new UnauthorizedException('Refresh token not valid');
+    }
+    if (result.expiresAt <= new Date() || result.revokedAt) {
+      this.logger.debug('RefreshToken expired ', { tokenHash, idUser });
+      throw new UnauthorizedException('Refresh token expired');
+    }
+    return result;
+  }
+
+  private tokenHash(token: string) {
+    return crypto.createHash('sha256').update(token).digest('hex');
+  }
+
+  private async revokedRefreshToken(
+    repository: Repository<RefreshToken> = this.refreshRepository,
+    oldRefresh: RefreshToken,
+    newRefresh: RefreshToken,
+  ) {
+    await repository.update(
+      {
+        id: oldRefresh.id,
+      },
+      {
+        revokedAt: new Date(),
+        replacedBy: newRefresh.id,
+      },
+    );
+  }
+
+  private async saveRefreshToken(
+    user: User,
+    ip: string | null,
+    userAgent: string | null,
+    token: string,
+    repository: Repository<RefreshToken> = this.refreshRepository,
+  ): Promise<RefreshToken> {
     const refreshToken = new RefreshToken();
     refreshToken.user = user;
     refreshToken.ipAddress = ip;
     refreshToken.userAgent = userAgent;
-    refreshToken.tokenHash = crypto.createHash('sha256').update(refresh).digest('hex');
+    refreshToken.tokenHash = this.tokenHash(token);
     refreshToken.expiresAt = new Date(Date.now() + ms(this.config.jwtRefreshExpiresIn));
-    await this.refreshRepository.save(refreshToken);
+    await repository.save(refreshToken);
     this.logger.debug('Refresh token stored');
-    return refresh;
+    return refreshToken;
   }
 }

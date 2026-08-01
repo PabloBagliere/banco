@@ -108,7 +108,7 @@ describe('UsersService', () => {
       const user = { id: 'uuid-1', email: 'a@b.com' } as User;
       userRepository.findOne.mockResolvedValue(user);
 
-      const result = await service.findOne('a@b.com');
+      const result = await service.findOneEmail('a@b.com');
 
       expect(userRepository.findOne).toHaveBeenCalledWith({
         where: { email: 'a@b.com' },
@@ -119,7 +119,7 @@ describe('UsersService', () => {
     it('devuelve null cuando el email no existe', async () => {
       userRepository.findOne.mockResolvedValue(null);
 
-      const result = await service.findOne('nadie@example.com');
+      const result = await service.findOneEmail('nadie@example.com');
 
       expect(result).toBeNull();
     });

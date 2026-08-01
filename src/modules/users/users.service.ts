@@ -27,10 +27,17 @@ export class UsersService {
 
     return user;
   }
-  findOne(email: string) {
+  findOneEmail(email: string) {
     return this.userRepository.findOne({
       where: {
         email,
+      },
+    });
+  }
+  findOneId(id: string) {
+    return this.userRepository.findOne({
+      where: {
+        id,
       },
     });
   }
