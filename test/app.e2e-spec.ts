@@ -1,11 +1,17 @@
 import { HttpService } from '@nestjs/axios';
-import { INestApplication, RequestMethod, ValidationPipe } from '@nestjs/common';
+import { NestExpressApplication } from '@nestjs/platform-express';
 import { Test, TestingModule } from '@nestjs/testing';
 import request from 'supertest';
-import { App } from 'supertest/types';
 import { cleanE2eDatabase, e2eDataSource, prepareE2eDatabase } from './e2e-database';
 import { AppModule } from '../src/app.module';
+import { configureApp } from '../src/main';
 import { NotificationsService } from '../src/modules/notifications/notifications.service';
+
+jest.mock('@scalar/nestjs-api-reference', () => ({
+  apiReference:
+    () => (_request: unknown, response: { type: (contentType: string) => { send: (body: string) => void } }) =>
+      response.type('html').send('<html><body>API reference</body></html>'),
+}));
 
 interface TokenResponse {
   accessToken: string;
@@ -13,8 +19,16 @@ interface TokenResponse {
   tokenType: string;
 }
 
+interface ErrorResponse {
+  error: string;
+  message: string[];
+  path: string;
+  statusCode: number;
+  timestamp: string;
+}
+
 describe('Authentication and verification (e2e)', () => {
-  let app: INestApplication<App> | undefined;
+  let app: NestExpressApplication | undefined;
   let verificationToken = '';
 
   beforeAll(async () => {
@@ -38,17 +52,8 @@ describe('Authentication and verification (e2e)', () => {
       })
       .compile();
 
-    app = moduleFixture.createNestApplication();
-    app.setGlobalPrefix('api', {
-      exclude: [{ path: 'health', method: RequestMethod.GET }],
-    });
-    app.useGlobalPipes(
-      new ValidationPipe({
-        whitelist: true,
-        transform: true,
-        forbidNonWhitelisted: true,
-      }),
-    );
+    app = moduleFixture.createNestApplication<NestExpressApplication>();
+    configureApp(app);
     await app.init();
   });
 
@@ -135,5 +140,22 @@ describe('Authentication and verification (e2e)', () => {
       .send({ refresh: 'eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1c2VyIn0.invalid' })
       .expect(401);
     expect((response.body as { message: string }).message).toBe('Refresh token is invalid or expired.');
+  });
+
+  it('applies the foundation HTTP error contract and publishes the API reference', async () => {
+    const invalidRequest = await request(app!.getHttpServer()).post('/api/auth/register').send({}).expect(400);
+    const error = invalidRequest.body as ErrorResponse;
+
+    expect(error).toMatchObject({
+      statusCode: 400,
+      error: 'Bad Request',
+      path: '/api/auth/register',
+    });
+    expect(error.message).toEqual(expect.any(Array));
+    expect(error.timestamp).toEqual(expect.any(String));
+    expect(Number.isNaN(Date.parse(error.timestamp))).toBe(false);
+
+    const docs = await request(app!.getHttpServer()).get('/docs').expect(200);
+    expect(docs.headers['content-type']).toContain('text/html');
   });
 });

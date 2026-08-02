@@ -7,10 +7,7 @@ import helmet from 'helmet';
 import { AppModule } from './app.module';
 import { AppConfig } from './infrastructure/config/app.config';
 
-async function bootstrap() {
-  // bufferLogs: los logs del boot se guardan y se reemiten con el logger
-  // definitivo una vez que podemos leer la config validada (sin process.env).
-  const app = await NestFactory.create<NestExpressApplication>(AppModule, { bufferLogs: true });
+export function configureApp(app: NestExpressApplication): void {
   const appConfig = app.get(AppConfig);
   app.set('trust proxy', 'loopback');
   app.useLogger(
@@ -54,7 +51,16 @@ async function bootstrap() {
       forbidNonWhitelisted: true,
     }),
   );
-  app.enableShutdownHooks();
-  await app.listen(appConfig.port);
 }
-void bootstrap();
+
+async function bootstrap() {
+  // bufferLogs: los logs del boot se guardan y se reemiten con el logger
+  // definitivo una vez que podemos leer la config validada (sin process.env).
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, { bufferLogs: true });
+  configureApp(app);
+  app.enableShutdownHooks();
+  await app.listen(app.get(AppConfig).port);
+}
+if (require.main === module) {
+  void bootstrap();
+}
