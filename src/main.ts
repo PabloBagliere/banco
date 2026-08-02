@@ -28,10 +28,21 @@ async function bootstrap() {
   });
 
   const config = new DocumentBuilder()
-    .setTitle('Banco Api')
-    .setDescription('Banco API description')
-    .setVersion('1.0')
-    .addTag('bank')
+    .setTitle('Banco API')
+    .setDescription('Banking API learning project built with NestJS.')
+    .setVersion('1.0.0')
+    .addTag('auth', 'Registration, authentication, and authorization.')
+    .addTag('verification', 'Email verification lifecycle.')
+    .addTag('health', 'Operational health checks.')
+    .addBearerAuth(
+      {
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'JWT',
+        description: 'Access token returned by the login or refresh endpoint.',
+      },
+      'access-token',
+    )
     .build();
   const document = SwaggerModule.createDocument(app, config);
   app.use('/docs', apiReference({ content: document }));

@@ -14,11 +14,11 @@ export class NotificationsService {
     private readonly config: AppConfig,
   ) {}
 
-  async sendVerificationEmail(to: string, token: string): Promise<void> {
-    const verificationUrl = `${this.config.appDomain}/verify?token=${token}`;
+  async sendVerificationEmail(recipientEmail: string, verificationToken: string): Promise<void> {
+    const verificationUrl = `${this.config.appDomain}/verify?token=${verificationToken}`;
     await this.emailChannel.send({
-      to,
-      subject: 'Verify your email',
+      to: recipientEmail,
+      subject: 'Verify your email address',
       html: buildEmailVerificationHtml(verificationUrl),
     });
   }

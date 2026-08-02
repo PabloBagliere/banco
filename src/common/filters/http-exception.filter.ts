@@ -22,9 +22,9 @@ export class CatchEverythingFilter implements ExceptionFilter {
     const url: string = httpAdapter.getRequestUrl(req) as string;
 
     if (httpStatus >= 500) {
-      this.logger.error(`${method} ${url} → ${httpStatus}`, (exception as Error | null)?.stack);
+      this.logger.error(`HTTP request failed: ${method} ${url} (${httpStatus}).`, (exception as Error | null)?.stack);
     } else {
-      this.logger.warn(`${method} ${url} → ${httpStatus}`);
+      this.logger.warn(`HTTP request rejected: ${method} ${url} (${httpStatus}).`);
     }
 
     const responseBody =

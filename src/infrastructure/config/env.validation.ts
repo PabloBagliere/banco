@@ -41,7 +41,7 @@ export const validate = (config: Record<string, unknown>) => {
   const result = envSchema.safeParse(config);
   if (!result.success) {
     const issues = result.error.issues.map((i) => `  - ${i.path.join('.')}: ${i.message}`).join('\n');
-    throw new Error(`Variables de entorno inválidas:\n${issues}`);
+    throw new Error(`Invalid environment variables:\n${issues}`);
   }
   return result.data;
 };

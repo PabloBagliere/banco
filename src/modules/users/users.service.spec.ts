@@ -103,12 +103,12 @@ describe('UsersService', () => {
     });
   });
 
-  describe('findOne', () => {
+  describe('findOneByEmail', () => {
     it('devuelve el usuario que matchea el email', async () => {
       const user = { id: 'uuid-1', email: 'a@b.com' } as User;
       userRepository.findOne.mockResolvedValue(user);
 
-      const result = await service.findOneEmail('a@b.com');
+      const result = await service.findOneByEmail('a@b.com');
 
       expect(userRepository.findOne).toHaveBeenCalledWith({
         where: { email: 'a@b.com' },
@@ -119,7 +119,7 @@ describe('UsersService', () => {
     it('devuelve null cuando el email no existe', async () => {
       userRepository.findOne.mockResolvedValue(null);
 
-      const result = await service.findOneEmail('nadie@example.com');
+      const result = await service.findOneByEmail('nadie@example.com');
 
       expect(result).toBeNull();
     });
@@ -136,7 +136,7 @@ describe('UsersService', () => {
       const result = await service.findOnePasswordHash(user);
 
       expect(accountRepository.findOne).toHaveBeenCalledWith({
-        where: { user, providerId: 'credentials' },
+        where: { userId: user.id, providerId: 'credentials' },
       });
       expect(result).toBe('hash123');
     });

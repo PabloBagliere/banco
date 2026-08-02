@@ -37,3 +37,13 @@ Registro de decisiones que se desvían del roadmap o que resuelven bifurcaciones
 - **Contexto:** el chequeo de password comprometido llama a un tercero en el path del registro (con k-anonymity: solo viajan 5 chars del SHA-1, header `Add-Padding: true`, timeout 3s).
 - **Decisión:** fail-open + log `warn`. El control principal es `IsStrongPassword` del DTO; HIBP es un control adicional y no justifica tumbar el registro (disponibilidad) porque un tercero esté caído.
 - **Alternativa descartada:** fail-closed (503). Revisar si algún día hay requisitos de compliance que lo exijan.
+
+## 5. Fixtures locales y secretos de ejemplo aceptados (Fase 1)
+
+**Decidido el 2026-08-01. El repositorio es un entorno de aprendizaje exclusivamente local; `peticiones.http` y `.env.example` priorizan poder levantar y probar la API sin configuración adicional.**
+
+- **Contexto:** `peticiones.http` contiene datos y JWT de la base local de desarrollo; `.env.example` contiene secretos JWT deterministas de 64 caracteres que superan la validación de arranque.
+- **Decisión:** se aceptan esos fixtures y secretos conocidos mientras el repositorio se use solo en desarrollo local. No se consideran secretos de producción ni se exige que la configuración rechace esos valores.
+- **Consecuencia:** el proyecto no puede desplegarse ni compartirse como aplicación con datos reales sin sustituir esas credenciales y revisar su configuración de seguridad. Los hallazgos de exposición de secretos asociados a esos archivos no se mantienen en la revisión de Fase 1 bajo este alcance.
+- **Alternativa descartada:** usar placeholders no aceptables en `.env.example`, impedir secretos conocidos en producción y retirar los JWT/credenciales de `peticiones.http`.
+- **Referencias afectadas:** `peticiones.http`, `.env.example`, `src/infrastructure/config/env.validation.ts`.
