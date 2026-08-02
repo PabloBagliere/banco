@@ -72,5 +72,7 @@ src/
 docker compose up -d      # Postgres + Redis
 pnpm install
 pnpm start:dev            # API en :3000, docs en /docs
-pnpm test && pnpm test:e2e
+pnpm test
+docker compose --profile test up -d --wait postgres-e2e
+pnpm test:e2e             # PostgreSQL aislado en :5433; migra y limpia entre casos
 ```

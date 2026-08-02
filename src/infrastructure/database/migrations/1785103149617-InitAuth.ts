@@ -4,6 +4,7 @@ export class InitAuth1785103149617 implements MigrationInterface {
   name = 'InitAuth1785103149617';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query(`CREATE EXTENSION IF NOT EXISTS "uuid-ossp"`);
     await queryRunner.query(
       `CREATE TABLE "session" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "expires_at" TIMESTAMP WITH TIME ZONE NOT NULL, "token" text NOT NULL, "created_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "ip_address" text, "user_agent" text, "user_id" uuid NOT NULL, "impersonated_by" uuid, CONSTRAINT "UQ_232f8e85d7633bd6ddfad421696" UNIQUE ("token"), CONSTRAINT "PK_f55da76ac1c3ac420f444d2ff11" PRIMARY KEY ("id"))`,
     );

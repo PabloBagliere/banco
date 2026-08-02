@@ -19,6 +19,25 @@ services:
     networks:
       - banco-net
 
+  postgres-e2e:
+    image: postgres:17-alpine
+    profiles: ['test']
+    environment:
+      POSTGRES_USER: banco_e2e
+      POSTGRES_PASSWORD: banco_e2e
+      POSTGRES_DB: banco_e2e
+    ports:
+      - '5433:5432'
+    volumes:
+      - postgres_e2e_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U banco_e2e -d banco_e2e']
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - banco-net
+
   pgadmin:
     image: dpage/pgadmin4:latest
     container_name: banco-pgadmin
@@ -55,6 +74,7 @@ services:
 
 volumes:
   postgres_data:
+  postgres_e2e_data:
   redis_data:
   pgadmin_data:
 
