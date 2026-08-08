@@ -8,9 +8,16 @@ import { RolesGuard } from './common/guard/roles.guard';
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 import { AppConfig } from './infrastructure/config/app.config';
 import { ConfigModule } from './infrastructure/config/config.module';
+import { AccountsModule } from './modules/accounts/accounts.module';
+import { AtmModule } from './modules/atm/atm.module';
+import { AuditModule } from './modules/audit/audit.module';
 import { AuthModule } from './modules/auth/auth.module';
+import { CardsModule } from './modules/cards/cards.module';
 import { HealthModule } from './modules/health/health.module';
+import { LedgerModule } from './modules/ledger/ledger.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
+import { ServicePaymentsModule } from './modules/service-payments/service-payments.module';
+import { TransfersModule } from './modules/transfers/transfers.module';
 import { UsersModule } from './modules/users/users.module';
 import { VerificationModule } from './modules/verification/verification.module';
 
@@ -46,6 +53,20 @@ import { VerificationModule } from './modules/verification/verification.module';
     VerificationModule,
 
     NotificationsModule,
+
+    AccountsModule,
+
+    LedgerModule,
+
+    TransfersModule,
+
+    CardsModule,
+
+    AtmModule,
+
+    ServicePaymentsModule,
+
+    AuditModule,
   ],
   controllers: [],
   providers: [
