@@ -9,7 +9,8 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import { BankAccount, BankAccountCurrency } from '../../accounts/entities/bank-account.entity';
+import { BankAccount } from '../../accounts/entities/bank-account.entity';
+import { BankAccountCurrency } from '../../accounts/entities/bank-account.enum';
 import { LedgerTransaction } from '../../ledger/entities/ledger-transaction.entity';
 
 export enum TransferStatus {

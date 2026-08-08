@@ -9,7 +9,8 @@ import {
   OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-import { BankAccount, BankAccountCurrency } from '../../accounts/entities/bank-account.entity';
+import { BankAccount } from '../../accounts/entities/bank-account.entity';
+import { BankAccountCurrency } from '../../accounts/entities/bank-account.enum';
 
 export enum LedgerTransactionType {
   TRANSFER = 'TRANSFER',

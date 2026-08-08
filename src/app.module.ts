@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
+import { CqrsModule } from '@nestjs/cqrs';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CatchEverythingFilter } from './common/filters/http-exception.filter';
@@ -36,6 +37,7 @@ import { VerificationModule } from './modules/verification/verification.module';
         migrations: [__dirname + '/infrastructure/database/migrations/*.js'],
       }),
     }),
+    CqrsModule.forRoot(),
     HealthModule,
     ThrottlerModule.forRoot({
       throttlers: [
@@ -45,27 +47,16 @@ import { VerificationModule } from './modules/verification/verification.module';
         },
       ],
     }),
-
     AuthModule,
-
     UsersModule,
-
     VerificationModule,
-
     NotificationsModule,
-
     AccountsModule,
-
     LedgerModule,
-
     TransfersModule,
-
     CardsModule,
-
     AtmModule,
-
     ServicePaymentsModule,
-
     AuditModule,
   ],
   controllers: [],
